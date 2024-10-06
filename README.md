@@ -1,4 +1,4 @@
-# Agro-Track
+# AgroTrack
 # Sahuaros del Saucito - NASA Space Apps Challenge Portfolio
 ### A submission for the challenge: https://www.spaceappschallenge.org/nasa-space-apps-2024/challenges/leveraging-earth-observation-data-for-informed-agricultural-decision-making/?tab=details
 
@@ -13,6 +13,6 @@ We are a group of students from Tecnológico de Monterrey at the Sonora Norte ca
 - **Project**: Agro-Track
 - **Description**: A java-script based app that gives the user vital and useful information about crops
 - **Technologies used**: Github, Figma, Expo, React Native, Google Earth Engine, Earth Data Search, Claude 3.5
-- **Project Link**: [GitHub repository or demo link]
+- **Presentation Link**: https://www.canva.com/design/DAGSvdIARvs/W9xgjQf0Cd5MarBnc24KDg/edit
 
 
