@@ -1,0 +1,175 @@
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, ScrollView } from 'react-native';
+
+// Función para formatear la fecha y la hora actuales
+const getCurrentDateTime = () => {
+  const now = new Date();
+  const options = { year: 'numeric', month: 'long', day: 'numeric' };
+  const date = now.toLocaleDateString('en-US', options); // Formato: 5 October, 2024
+  const time = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }); // Formato: 09:30 AM
+  return `${date}, ${time}`;
+};
+
+const WeatherScreen = () => {
+  const [currentDateTime, setCurrentDateTime] = useState(getCurrentDateTime());
+  const [temperature, setTemperature] = useState(null); // Estado para la temperatura
+
+  // Función para obtener el clima actual de Hermosillo
+  const fetchWeather = async () => {
+    const apiKey = 'TU_API_KEY_AQUI'; // Reemplaza con tu API key de OpenWeatherMap
+    const url = `https://api.openweathermap.org/data/2.5/weather?q=Hermosillo&units=metric&appid=${apiKey}`;
+    try {
+      const response = await fetch(url);
+      const data = await response.json();
+      const temp = data.main.temp;
+      setTemperature(temp); // Actualizar la temperatura
+    } catch (error) {
+      console.error('Error al obtener el clima:', error);
+    }
+  };
+
+  useEffect(() => {
+    // Actualiza la fecha y hora cada segundo
+    const intervalId = setInterval(() => {
+      setCurrentDateTime(getCurrentDateTime());
+    }, 1000);
+
+    // Obtener el clima al cargar el componente
+    fetchWeather();
+
+    return () => clearInterval(intervalId); // Limpia el intervalo cuando el componente se desmonta
+  }, []);
+
+  return (
+    <ScrollView style={styles.container}>
+      {/* Header */}
+      <View style={styles.header}>
+        <View>
+          <Text style={styles.location}>Hermosillo, Sonora</Text>
+          {/* Mostrar la fecha y hora actuales */}
+          <Text style={styles.date}>{currentDateTime}</Text>
+        </View>
+        <View style={styles.icon}></View> {/* Aquí podrías poner un ícono */}
+      </View>
+      {/* Main Temperature */}
+      <View style={styles.mainTempContainer}>
+        <Text style={styles.mainTemp}>
+          {temperature !== null ? `${temperature}°C` : 'Cargando...'}
+        </Text>
+        <View style={styles.tempDetails}>
+          <Text>Max Temp: 42°</Text>
+          <Text>Min Temp: 28°</Text>
+          <Text>UV Index: 7</Text>
+          <Text>Cloud Cover: 0%</Text>
+        </View>
+      </View>
+      {/* Weather Info */}
+      <View style={styles.weatherInfo}>
+        <View style={styles.infoBox}>
+          <Text>Wind speed</Text>
+          <Text>8-24 km/h South</Text>
+        </View>
+        <View style={styles.infoBox}>
+          <Text>Rain chance</Text>
+          <Text>0%</Text>
+        </View>
+        <View style={styles.infoBox}>
+          <Text>Humidity</Text>
+          <Text>12%</Text>
+        </View>
+        <View style={styles.infoBox}>
+          <Text>Precipitation</Text>
+          <Text>0.0 mm/d</Text>
+        </View>
+      </View>
+      {/* Hourly Forecast */}
+      <View style={styles.hourlyForecast}>
+        <Text style={styles.forecastTitle}>Hourly forecast</Text>
+        <ScrollView horizontal>
+          <View style={styles.hourlyBox}>
+            <Text>Now</Text>
+            <Text>40°</Text>
+          </View>
+          <View style={styles.hourlyBox}>
+            <Text>10 AM</Text>
+            <Text>38°</Text>
+          </View>
+          <View style={styles.hourlyBox}>
+            <Text>11 AM</Text>
+            <Text>37°</Text>
+          </View>
+          <View style={styles.hourlyBox}>
+            <Text>12 PM</Text>
+            <Text>41°</Text>
+          </View>
+          <View style={styles.hourlyBox}>
+            <Text>1 PM</Text>
+            <Text>42°</Text>
+          </View>
+          <View style={styles.hourlyBox}>
+            <Text>2 PM</Text>
+            <Text>40°</Text>
+          </View>
+        </ScrollView>
+      </View>
+    </ScrollView>
+  );
+};
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#E0F7FA',
+    padding: 20,
+  },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  location: {
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  date: {
+    fontSize: 14,
+    color: '#888',
+  },
+  mainTempContainer: {
+    marginVertical: 20,
+    alignItems: 'center',
+  },
+  mainTemp: {
+    fontSize: 72,
+    fontWeight: 'bold',
+  },
+  tempDetails: {
+    marginTop: 10,
+    alignItems: 'center',
+  },
+  weatherInfo: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    flexWrap: 'wrap',
+  },
+  infoBox: {
+    width: '45%',
+    backgroundColor: '#B2DFDB',
+    padding: 15,
+    borderRadius: 10,
+    marginVertical: 10,
+  },
+  hourlyForecast: {
+    marginTop: 20,
+  },
+  forecastTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 10,
+  },
+  hourlyBox: {
+    alignItems: 'center',
+    marginHorizontal: 10,
+  },
+});
+
+export default WeatherScreen;
