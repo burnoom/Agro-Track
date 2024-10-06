@@ -1,0 +1,263 @@
+// Definir el área de interés (México)
+var mexico = ee.FeatureCollection("FAO/GAUL/2015/level1")
+  .filter(ee.Filter.eq('ADM0_NAME', 'Mexico'));
+
+// Parámetros para monitoreo (revisados)
+var parameters = ['Indice de Vegetación', 'Precipitación', 'Temperatura'];
+
+// Función para obtener datos según el parámetro seleccionado
+function getData(parameter, date, region) {
+  var startDate = ee.Date(date);
+  var endDate = startDate.advance(1, 'day');
+  
+  var collection;
+  switch(parameter) {
+    case 'Indice de Vegetación':
+      collection = ee.ImageCollection('MODIS/006/MOD13Q1')
+        .filterDate(startDate, endDate.advance(16, 'day'))
+        .select('NDVI')
+        .map(function(image) {
+          return image.multiply(0.0001).rename(parameter);
+        });
+      break;
+    case 'Precipitación':
+      collection = ee.ImageCollection('UCSB-CHG/CHIRPS/DAILY')
+        .filterDate(startDate, endDate)
+        .select('precipitation')
+        .map(function(image) {
+          return image.rename(parameter);
+        });
+      break;
+    case 'Temperatura':
+      collection = ee.ImageCollection('MODIS/006/MOD11A1')
+        .filterDate(startDate, endDate)
+        .select('LST_Day_1km')
+        .map(function(image) {
+          return image.multiply(0.02).subtract(273.15).rename(parameter);
+        });
+      break;
+  }
+  
+  var image = collection.mean();
+  return image.clip(region).unmask(-9999);  // Use -9999 as a flag for no data
+}
+
+// Función para obtener parámetros de visualización
+function getVisParams(parameter) {
+  switch(parameter) {
+    case 'Indice de Vegetación':
+      return {
+        min: 0, 
+        max: 1, 
+        palette: ['#FFFFE5', '#F7FCB9', '#D9F0A3', '#ADDD8E', '#78C679', '#41AB5D', '#238443', '#006837', '#004529'],
+        description: 'NDVI (0 a 1)'
+      };
+    case 'Precipitación':
+      return {
+        min: 0, 
+        max: 50, 
+        palette: ['#FFFFFF', '#C6DBEF', '#9ECAE1', '#6BAED6', '#4292C6', '#2171B5', '#08519C', '#08306B'],
+        description: 'Precipitación (mm/día)'
+      };
+    case 'Temperatura':
+      return {
+        min: 0, 
+        max: 40, 
+        palette: ['#313695', '#4575B4', '#74ADD1', '#ABD9E9', '#E0F3F8', '#FFFFBF', '#FEE090', '#FDAE61', '#F46D43', '#D73027', '#A50026'],
+        description: 'Temperatura (°C)'
+      };
+  }
+}
+
+// Función para añadir una leyenda al mapa
+function addLegend(visParams) {
+  // Remover leyendas existentes
+  map.widgets().getAll().forEach(function(widget) {
+    if (widget.getType() === 'Panel' && widget.style().get('position') === 'bottom-right') {
+      map.remove(widget);
+    }
+  });
+
+  var legend = ui.Panel({
+    style: {
+      position: 'bottom-right',
+      padding: '8px 15px'
+    }
+  });
+
+  var legendTitle = ui.Label({
+    value: visParams.description,
+    style: {fontWeight: 'bold', fontSize: '18px', margin: '0 0 4px 0', padding: '0'}
+  });
+  legend.add(legendTitle);
+
+  var palette = visParams.palette;
+  var min = visParams.min;
+  var max = visParams.max;
+
+  for (var i = 0; i < palette.length; i++) {
+    var colorBox = ui.Label({
+      style: {
+        backgroundColor: palette[i],
+        padding: '8px',
+        margin: '0 0 4px 0'
+      }
+    });
+    var step = i / (palette.length - 1);
+    var valueLabel = ui.Label({
+      value: (min + step * (max - min)).toFixed(1),
+      style: {margin: '0 0 4px 6px'}
+    });
+    legend.add(ui.Panel([colorBox, valueLabel], ui.Panel.Layout.Flow('horizontal')));
+  }
+
+  map.add(legend);
+}
+
+// Función para obtener la unidad de medida de cada parámetro
+function getUnit(parameter) {
+  switch(parameter) {
+    case 'Indice de Vegetación':
+      return '';
+    case 'Precipitación':
+      return 'mm/día';
+    case 'Temperatura':
+      return '°C';
+    default:
+      return '';
+  }
+}
+
+// Crear la interfaz de usuario
+var panel = ui.Panel({style: {width: '300px'}});
+
+var title = ui.Label('Monitoreo Agrícola en México');
+title.style().set('fontSize', '24px');
+panel.add(title);
+
+var levelSelect = ui.Select({
+  items: ['Nacional', 'Estatal'],
+  placeholder: 'Selecciona el nivel',
+  onChange: function(level) {
+    stateSelect.setDisabled(level === 'Nacional');
+    updateMap();
+  }
+});
+panel.add(levelSelect);
+
+var stateSelect = ui.Select({
+  items: mexico.aggregate_array('ADM1_NAME').distinct().sort().getInfo(),
+  placeholder: 'Selecciona un estado',
+  disabled: true,
+  onChange: updateMap
+});
+panel.add(stateSelect);
+
+var parameterSelect = ui.Select({
+  items: parameters,
+  placeholder: 'Selecciona un parámetro',
+  onChange: updateMap
+});
+panel.add(parameterSelect);
+
+var datePicker = ui.DateSlider({
+  start: '2020-01-01',
+  end: ee.Date(Date.now()).format('YYYY-MM-dd').getInfo(),
+  value: ee.Date(Date.now()).advance(-1, 'day').format('YYYY-MM-dd').getInfo(),
+  period: 1,
+  onChange: updateMap
+});
+panel.add(datePicker);
+
+var map = ui.Map();
+map.style().set('cursor', 'crosshair');
+
+// Función para actualizar la visualización
+function updateMap() {
+  var level = levelSelect.getValue();
+  var state = stateSelect.getValue();
+  var parameter = parameterSelect.getValue();
+  var date = ee.Date(datePicker.getValue()[0]);
+  
+  if (level && parameter && date) {
+    var region = (level === 'Nacional') ? mexico : mexico.filter(ee.Filter.eq('ADM1_NAME', state));
+    var regionName = (level === 'Nacional') ? 'México' : state;
+    
+    var data = getData(parameter, date, region);
+    var visParams = getVisParams(parameter);
+    
+    map.layers().reset();
+    var layer = ui.Map.Layer(data.updateMask(data.neq(-9999)), visParams, parameter);
+    map.add(layer);
+    addLegend(visParams);
+    map.addLayer(region, {}, 'Región seleccionada', false);
+    map.centerObject(region);
+    
+    // Calcular y mostrar el promedio
+    var mean = data.reduceRegion({
+      reducer: ee.Reducer.mean(),
+      geometry: region,
+      scale: 1000,
+      maxPixels: 1e9
+    });
+    mean.evaluate(function(meanResult) {
+      var value = meanResult[parameter];
+      if (value !== null && value !== -9999) {
+        var unit = getUnit(parameter);
+        print('Promedio de ' + parameter + ' en ' + regionName + ':', value.toFixed(4) + ' ' + unit);
+      } else {
+        print('No hay datos disponibles para calcular el promedio de ' + parameter + ' en ' + regionName + ' para la fecha seleccionada.');
+      }
+    });
+    
+    // Calcular y mostrar el porcentaje de cobertura
+    var totalPixels = data.bandNames().length().multiply(region.area()).divide(1000000);  // Assuming 1km resolution
+    var validPixels = data.neq(-9999).reduceRegion({
+      reducer: ee.Reducer.sum(),
+      geometry: region,
+      scale: 1000,
+      maxPixels: 1e9
+    });
+    validPixels.evaluate(function(result) {
+      var coverage = result[parameter] / totalPixels.getInfo() * 100;
+      print('Porcentaje de cobertura de datos:', coverage.toFixed(2) + '%');
+    });
+  }
+}
+
+// Añadir información al hacer clic en el mapa
+map.onClick(function(coords) {
+  var point = ee.Geometry.Point(coords.lon, coords.lat);
+  var level = levelSelect.getValue();
+  var state = stateSelect.getValue();
+  var parameter = parameterSelect.getValue();
+  var date = ee.Date(datePicker.getValue()[0]);
+  
+  if (level && parameter && date) {
+    var region = (level === 'Nacional') ? mexico : mexico.filter(ee.Filter.eq('ADM1_NAME', state));
+    var data = getData(parameter, date, region);
+    
+    var sample = data.sample(point, 30);
+    sample.evaluate(function(result) {
+      if (result.features.length > 0) {
+        var value = result.features[0].properties[parameter];
+        if (value !== -9999) {
+          print(parameter + ' en el punto seleccionado:', value.toFixed(4) + ' ' + getUnit(parameter));
+        } else {
+          print('No hay datos disponibles para este punto en la fecha seleccionada.');
+        }
+      } else {
+        print('No hay datos disponibles para este punto.');
+      }
+    });
+  }
+});
+
+ui.root.clear();
+ui.root.add(ui.SplitPanel({
+  firstPanel: panel,
+  secondPanel: map,
+  wipe: true
+}));
+
+levelSelect.setValue('Nacional');
