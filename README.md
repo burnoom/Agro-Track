@@ -16,7 +16,7 @@ We are a group of students from Tecnológico de Monterrey at the Sonora Norte ca
 - **Technologies used**: Github, Figma, Expo, React Native, Google Earth Engine, Earth Data Search, Claude 3.5
 - **Presentation Link**: https://www.canva.com/design/DAGSvdIARvs/W9xgjQf0Cd5MarBnc24KDg/edit
 
-##🔧 How To 
+## 🔧 How To 
 
-###Next, all the steps carried out for the creation of the prototype were written in a methodology form. This project was devised after the team read the challengue and tried to reach a solution. We decided to develop a mobile app using the open-source UI software called "React Native" for coding. The coding language used for the developing of this mobile app is JavaScript. To access to the required data we needed to use some databases as "OpenSourceMap" and "AccuWeather" using API keys to access to the specific information needed for the mobile app. 
+### Next, all the steps carried out for the creation of the prototype were written in a methodology form. This project was devised after the team read the challengue and tried to reach a solution. We decided to develop a mobile app using the open-source UI software called "React Native" for coding. The coding language used for the developing of this mobile app is JavaScript. To access to the required data we needed to use some databases as "OpenSourceMap" and "AccuWeather" using API keys to access to the specific information needed for the mobile app. 
 
