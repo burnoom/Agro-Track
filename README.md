@@ -1,4 +1,4 @@
-![](Images/Logo.png)
+![](Images/Logo.jpg)
 # AgroTrack
 # Sahuaros del Saucito - NASA Space Apps Challenge Portfolio
 ### A submission for the challenge: https://www.spaceappschallenge.org/nasa-space-apps-2024/challenges/leveraging-earth-observation-data-for-informed-agricultural-decision-making/?tab=details
