@@ -1,0 +1,408 @@
+import React, { useState, useEffect } from 'react';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Platform, KeyboardAvoidingView, Animated, FlatList, Modal } from 'react-native';
+
+const estados = [
+  'Aguascalientes', 'Baja California', 'Baja California Sur', 'Campeche', 'Chiapas', 
+  'Chihuahua', 'Coahuila', 'Colima', 'Durango', 'Guanajuato', 
+  'Guerrero', 'Hidalgo', 'Jalisco', 'Mexico', 'Michoacán', 
+  'Morelos', 'Nayarit', 'Nuevo León', 'Oaxaca', 'Puebla', 
+  'Querétaro', 'Quintana Roo', 'San Luis Potosí', 'Sinaloa', 
+  'Sonora', 'Tabasco', 'Tamaulipas', 'Tlaxcala', 'Veracruz', 
+  'Yucatán', 'Zacatecas'
+];
+
+const municipiosPorEstado = {
+ 'Aguascalientes': [
+        'Aguascalientes', 'Asientos', 'Calvillo', 'Cosío', 'El Llano', 'San José de Gracia', 'Tepezalá', 'Pabellón de Arteaga', 'Rincón de Romos', 'Jesús María'
+    ],
+    'Baja California': [
+        'Tijuana', 'Mexicali', 'Ensenada', 'Rosarito', 'Tecate', 'San Quintín', 'San Felipe', 'Imperial Beach'
+    ],
+    'Baja California Sur': [
+        'La Paz', 'Cabo San Lucas', 'San José del Cabo', 'Loreto', 'Ciudad Constitución', 'El Pescadero', 'Mulegé', 'Comondú'
+    ],
+    'Campeche': [
+        'Campeche', 'Ciudad del Carmen', 'Champotón', 'Escárcega', 'Calkiní', 'Hopelchén', 'Palizada', 'Tenabo', 'Calakmul'
+    ],
+    'Chiapas': [
+        'Tuxtla Gutiérrez', 'San Cristóbal de las Casas', 'Tapachula', 'Palenque', 'Comitán', 'Ocosingo', 'Huixtla', 'Chiapas de Corzo', 'Frontera Comalapa'
+    ],
+    'Chihuahua': [
+        'Chihuahua', 'Juárez', 'Delicias', 'Creel', 'Cuauhtémoc', 'Ojinaga', 'Jiménez', 'Camargo', 'Madera', 'Rosales', 'Gomez Farías'
+    ],
+    'Coahuila': [
+        'Saltillo', 'Torreón', 'Monclova', 'Piedras Negras', 'Sabinas', 'Frontera', 'Allende', 'Acuña', 'San Pedro', 'Arteaga'
+    ],
+    'Colima': [
+        'Colima', 'Manzanillo', 'Tecomán', 'Comala', 'Villa de Álvarez', 'Armería', 'Minatitlán', 'Coquimatlán', 'Cuauhtémoc'
+    ],
+    'Durango': [
+        'Durango', 'Gomez Palacio', 'Lerdo', 'El Mezquital', 'Canatlán', 'Pánuco de Coronado', 'Poanas', 'Nazas', 'Vicente Guerrero'
+    ],
+    'Guanajuato': [
+        'Guanajuato', 'León', 'Irapuato', 'Celaya', 'Salamanca', 'Pénjamo', 'San Miguel de Allende', 'Silao', 'Romita', 'Apaseo el Grande'
+    ],
+    'Guerrero': [
+        'Chilpancingo', 'Acapulco', 'Iguala', 'Taxco', 'Zihuatanejo', 'Pungarabato', 'Coyuca de Benítez', 'Ometepec', 'Tlapa de Comonfort'
+    ],
+    'Hidalgo': [
+        'Pachuca', 'Tula', 'Tulancingo', 'Huejutla', 'Progreso de Obregón', 'Apan', 'Ixmiquilpan', 'Mixquiahuala'
+    ],
+    'Jalisco': [
+        'Guadalajara', 'Zapopan', 'Tlaquepaque', 'Puerto Vallarta', 'Tlajomulco de Zúñiga', 'Tepatitlán', 'Ocotlán', 'Los Altos de Jalisco', 'La Barca'
+    ],
+    'Mexico': [
+        'Toluca', 'Ecatepec', 'Naucalpan', 'Tlalnepantla', 'Chimalhuacán', 'Cuautitlán Izcalli', 'Atizapán de Zaragoza', 'Tultitlán', 'Coacalco'
+    ],
+    'Michoacán': [
+        'Morelia', 'Uruapan', 'Lázaro Cárdenas', 'Zamora', 'Pátzcuaro', 'Apatzingán', 'Sahuayo', 'Los Reyes', 'La Piedad', 'Tacámbaro'
+    ],
+    'Morelos': [
+        'Cuernavaca', 'Jiutepec', 'Cuautla', 'Temixco', 'Zacatepec', 'Jojutla', 'Xochitepec', 'Tlaquiltenango', 'Tlaltizapán', 'Puente de Ixtla'
+    ],
+    'Nayarit': [
+        'Tepic', 'Bahía de Banderas', 'Xalisco', 'San Blas', 'Santa María del Oro', 'Compostela', 'El Nayar', 'Tuxpan', 'Tecuala', 'Santiago Ixcuintla'
+    ],
+    'Nuevo León': [
+        'Monterrey', 'Guadalupe', 'San Nicolás', 'Santa Catarina', 'Apodaca', 'San Pedro Garza García', 'Escobedo', 'Cadereyta Jiménez', 'Allende'
+    ],
+    'Oaxaca': [
+        'Oaxaca de Juárez', 'Salina Cruz', 'Juchitán', 'Tehuantepec', 'Tuxtepec', 'Miahuatlán de Porfirio Díaz', 'Etla', 'Sola de Vega', 'San Pedro Mixtepec'
+    ],
+    'Puebla': [
+        'Puebla', 'Tehuacán', 'Atlixco', 'San Andrés Cholula', 'Chalchicomula de Sesma', 'Huejotzingo', 'Amozoc', 'Tlatlauquitepec', 'Zacatlán', 'Chignahuapan'
+    ],
+    'Querétaro': [
+        'Querétaro', 'El Marqués', 'San Juan del Río', 'Tequisquiapan', 'Cadereyta', 'Pinal de Amoles', 'Tolimán', 'Ezequiel Montes', 'Peñamiller'
+    ],
+    'Quintana Roo': [
+        'Chetumal', 'Cancún', 'Playa del Carmen', 'Tulum', 'Cozumel', 'Felipe Carrillo Puerto', 'Puerto Morelos', 'Isla Mujeres', 'Solidaridad', 'Lázaro Cárdenas'
+    ],
+    'San Luis Potosí': [
+        'San Luis Potosí', 'Ciudad Valles', 'Matehuala', 'Soledad de Graciano Sánchez', 'Tamazunchale', 'Rioverde', 'Cerro de San Pedro', 'Tancanhuitz'
+    ],
+    'Sinaloa': [
+        'Culiacán', 'Mazatlán', 'Los Mochis', 'Guasave', 'El Fuerte', 'Salvador Alvarado', 'Angostura', 'Rosario', 'Concordia', 'Badiraguato'
+    ],
+    'Sonora': [
+        'Hermosillo', 'Nogales', 'Guaymas', 'San Luis Río Colorado', 'Cajeme', 'Caborca', 'Nacozari de García', 'Cananea', 'Puerto Peñasco'
+    ],
+    'Tabasco': [
+        'Villahermosa', 'Cárdenas', 'Comalcalco', 'Paraíso', 'Balancán', 'Macuspana', 'Teapa', 'Huimanguillo', 'Tenosique', 'Jalapa'
+    ],
+    'Tamaulipas': [
+        'Ciudad Victoria', 'Reynosa', 'Matamoros', 'Nuevo Laredo', 'Mante', 'Tampico', 'Altamira', 'El Mante', 'Zaragoza', 'San Fernando'
+    ],
+    'Tlaxcala': [
+        'Tlaxcala', 'Apizaco', 'Huamantla', 'Tlaxco', 'Xaloztoc', 'Tzompantepec', 'Contla', 'San Pablo del Monte', 'Totolac'
+    ],
+    'Veracruz': [
+        'Veracruz', 'Boca del Río', 'Xalapa', 'Córdoba', 'Orizaba', 'Minatitlán', 'Coatzacoalcos', 'Poza Rica', 'Tuxpan', 'Pánuco'
+    ],
+    'Yucatán': [
+        'Mérida', 'Progreso', 'Tizimin', 'Valladolid', 'Kanasín', 'Motul', 'Izamal', 'Ticul', 'Tekax', 'Celestún'
+    ],
+    'Zacatecas': [
+        'Zacatecas', 'Guadalupe', 'Jerez', 'Fresnillo', 'Sombrerete', 'Loreto', 'Pánuco', 'Juan Aldama', 'Cañitas de Felipe Pescador'
+    ]
+
+};
+
+export default function App() {
+  const [screen, setScreen] = useState('main');
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const [fontSize] = useState(new Animated.Value(16));
+  const [selectedState, setSelectedState] = useState('');
+  const [selectedMunicipio, setSelectedMunicipio] = useState(''); // Estado para el municipio
+  const [email, setEmail] = useState('');
+  const [municipios, setMunicipios] = useState([]); // Estado para los municipios
+  const [modalVisible, setModalVisible] = useState(false);
+  const [municipioModalVisible, setMunicipioModalVisible] = useState(false); // Modal para municipios
+
+
+  useEffect(() => {
+    if (screen === 'welcome') {
+      Animated.timing(fontSize, {
+        toValue: 20,
+        duration: 3000,
+        useNativeDriver: false,
+      }).start();
+    }
+  }, [screen]);
+  useEffect(() => {
+    if (selectedState) {
+      setMunicipios(municipiosPorEstado[selectedState]); // Actualiza municipios según el estado seleccionado
+    }
+  }, [selectedState]);
+  const handleRegister = () => {
+    setScreen('welcome');
+    setTimeout(() => {
+      setScreen('location');
+    }, 3000);
+  };
+
+  const renderBackArrow = () => (
+    <TouchableOpacity style={styles.backArrow} onPress={() => setScreen('main')}>
+      <Text style={styles.arrowText}>←</Text>
+    </TouchableOpacity>
+  );
+
+  const renderMainScreen = () => (
+    <View style={styles.buttonContainer}>
+      <TouchableOpacity style={styles.button} onPress={() => setScreen('login')}>
+        <Text style={styles.buttonText}>Iniciar sesión</Text>
+      </TouchableOpacity>
+      <TouchableOpacity style={styles.button} onPress={() => setScreen('register')}>
+        <Text style={styles.buttonText}>Registrarse</Text>
+      </TouchableOpacity>
+    </View>
+  );
+
+  const renderLoginScreen = () => (
+    <KeyboardAvoidingView style={styles.formContainer} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+      {renderBackArrow()}
+      <TextInput
+        style={styles.input}
+        placeholder="Nombre de usuario"
+        value={username}
+        onChangeText={setUsername}
+        placeholderTextColor="#666"
+        maxLength={15}
+      />
+      <TextInput
+        style={styles.input}
+        placeholder="Contraseña"
+        value={password}
+        onChangeText={setPassword}
+        secureTextEntry
+        placeholderTextColor="#666"
+        maxLength={20}
+      />
+      <TouchableOpacity style={styles.button} onPress={() => console.log('Iniciar sesión')}>
+        <Text style={styles.buttonText}>Iniciar sesión</Text>
+      </TouchableOpacity>
+    </KeyboardAvoidingView>
+  );
+
+  const renderRegisterScreen = () => (
+    <KeyboardAvoidingView style={styles.formContainer} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+      {renderBackArrow()}
+      <TextInput
+        style={styles.input}
+        placeholder="Nuevo nombre de usuario"
+        value={username}
+        onChangeText={setUsername}
+        placeholderTextColor="#666"
+        maxLength={15}
+      />
+      <TextInput
+        style={styles.input}
+        placeholder="Nueva contraseña"
+        value={password}
+        onChangeText={setPassword}
+        secureTextEntry
+        placeholderTextColor="#666"
+        maxLength={20}
+      />
+      <TextInput
+      style={styles.input}
+      placeholder="Correo electrónico"
+      keyboardType="email-address"
+      value={email} // Asegúrate de definir este estado
+      onChangeText={setEmail}
+      placeholderTextColor="#666"
+      />
+      <TouchableOpacity style={styles.button} onPress={handleRegister}>
+        <Text style={styles.buttonText}>Registrarse</Text>
+      </TouchableOpacity>
+      <TouchableOpacity style={styles.googleButton} onPress={() => console.log('Registrarse con Google')}>
+        <Text style={styles.buttonText}>Registrarse con Google</Text>
+      </TouchableOpacity>
+    </KeyboardAvoidingView>
+  );
+
+  const renderWelcomeScreen = () => (
+    <View style={styles.welcomeContainer}>
+      <Animated.Text style={[styles.welcomeText, { fontSize }]}>
+        ¡Bienvenido {username}!
+      </Animated.Text>
+    </View>
+  );
+
+  const renderLocationScreen = () => (
+    <View style={styles.formContainer}>
+      <TouchableOpacity
+        style={styles.input}
+        onPress={() => setModalVisible(true)}>
+        <Text style={{ color: selectedState ? '#000' : '#666' }}>
+          {selectedState || "Selecciona tu estado/región"}
+        </Text>
+      </TouchableOpacity>
+
+      {/* Solo mostrar si hay un estado seleccionado */}
+      {selectedState && (
+        <>
+          <TouchableOpacity
+            style={styles.input}
+            onPress={() => setMunicipioModalVisible(true)}>
+            <Text style={{ color: selectedMunicipio ? '#000' : '#666' }}>
+              {selectedMunicipio || "Selecciona tu municipio"}
+            </Text>
+          </TouchableOpacity>
+        </>
+      )}
+
+      <Modal visible={modalVisible} transparent={true} animationType="fade">
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            <FlatList
+              data={estados}
+              keyExtractor={(item) => item}
+              renderItem={({ item }) => (
+                <TouchableOpacity
+                  style={styles.modalItem}
+                  onPress={() => {
+                    setSelectedState(item);
+                    setMunicipios(municipiosPorEstado[item] || []);
+                    setSelectedMunicipio(''); // Resetea el municipio al cambiar de estado
+                    setModalVisible(false);
+                  }}>
+                  <Text>{item}</Text>
+                </TouchableOpacity>
+              )}
+            />
+            <TouchableOpacity style={styles.closeButton} onPress={() => setModalVisible(false)}>
+              <Text style={styles.closeButtonText}>Cerrar</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Modal para seleccionar municipios */}
+      <Modal visible={municipioModalVisible} transparent={true} animationType="fade">
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            <FlatList
+              data={municipios}
+              keyExtractor={(item) => item}
+              renderItem={({ item }) => (
+                <TouchableOpacity
+                  style={styles.modalItem}
+                  onPress={() => {
+                    setSelectedMunicipio(item);
+                    setMunicipioModalVisible(false);
+                  }}>
+                  <Text>{item}</Text>
+                </TouchableOpacity>
+              )}
+            />
+            <TouchableOpacity style={styles.closeButton} onPress={() => setMunicipioModalVisible(false)}>
+              <Text style={styles.closeButtonText}>Cerrar</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+      <TouchableOpacity 
+        style={[styles.button, { opacity: selectedState && selectedMunicipio ? 1 : 0.5 }]} 
+        disabled={!selectedState || !selectedMunicipio}
+      >
+        <Text style={styles.buttonText}>Siguiente</Text>
+      </TouchableOpacity>
+    </View>
+  );
+
+  return (
+    <View style={styles.container}>
+      {screen === 'main' && renderMainScreen()}
+      {screen === 'login' && renderLoginScreen()}
+      {screen === 'register' && renderRegisterScreen()}
+      {screen === 'welcome' && renderWelcomeScreen()}
+      {screen === 'location' && renderLocationScreen()}
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  backArrow: {
+    position: 'absolute',
+    top: -40,
+    left: 0,
+  },
+  arrowText: {
+    fontSize: 24,
+    color: '#1E90FF',
+  },
+  buttonContainer: {
+    justifyContent: 'center',
+  },
+  formContainer: {
+    width: '80%',
+  },
+  input: {
+    borderWidth: 1,
+    borderColor: '#ccc',
+    padding: 10,
+    marginBottom: 20,
+    borderRadius: 5,
+    width: '100%',
+    backgroundColor: '#fff',
+  },
+  button: {
+    backgroundColor: '#1E90FF',
+    padding: 15,
+    borderRadius: 5,
+    marginTop: 10,
+  },
+  googleButton: {
+    backgroundColor: '#DB4437',
+    padding: 15,
+    borderRadius: 5,
+    marginTop: 10,
+  },
+  buttonText: {
+    color: '#fff',
+    textAlign: 'center',
+  },
+  welcomeContainer: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    flex: 1,
+  },
+  welcomeText: {
+    color: '#1E90FF',
+  },
+  modalContainer: {
+    position: 'absolute',
+    top: 150, // Ajusta esto según tu diseño
+    left: '10%', // Centra el modal con respecto al input
+    right: '10%',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  modalContent: {
+    backgroundColor: 'white',
+    borderRadius: 10,
+    padding: 20,
+    maxHeight: 300, // Para limitar la altura de la lista
+  },
+  modalItem: {
+    padding: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: '#ccc',
+  },
+  closeButton: {
+    marginTop: 10,
+    padding: 10,
+    backgroundColor: '#1E90FF',
+    borderRadius: 5,
+  },
+  closeButtonText: {
+    color: '#fff',
+    textAlign: 'center',
+  },
+});
